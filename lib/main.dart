@@ -50,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
+  bool _isPasswordVisible = false; // State to toggle password visibility
 
   // Function to handle login with Firebase
   Future<void> _login() async {
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: 5),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible, // Toggle visibility
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Color.fromARGB(255, 233, 255, 242),
@@ -178,7 +179,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    suffixIcon: Icon(Icons.visibility_off),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 if (_errorMessage != null) ...[
@@ -264,6 +275,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String? _errorMessage;
+  bool _isPasswordVisible = false; // State to toggle password visibility
+  bool _isConfirmPasswordVisible = false; // State to toggle confirm password visibility
 
   Future<void> _signUp() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -456,7 +469,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 SizedBox(height: 5),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible, // Toggle visibility
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color.fromARGB(255, 233, 255, 242),
@@ -466,7 +479,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    suffixIcon: Icon(Icons.visibility),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 SizedBox(height: 20),
@@ -477,7 +500,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 SizedBox(height: 5),
                 TextField(
                   controller: _confirmPasswordController,
-                  obscureText: true,
+                  obscureText: !_isConfirmPasswordVisible, // Toggle visibility
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color.fromARGB(255, 233, 255, 242),
@@ -487,7 +510,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    suffixIcon: Icon(Icons.visibility),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 SizedBox(height: 10),
