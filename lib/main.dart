@@ -8,6 +8,8 @@ void main() {
 }
 
 class MainScreen extends StatelessWidget {
+  const MainScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -25,6 +27,8 @@ class MainScreen extends StatelessWidget {
   Description: Log in page for users
 */
 class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,6 +120,24 @@ class LoginScreen extends StatelessWidget {
                     suffixIcon: Icon(Icons.visibility_off),
                   ),
                 ),
+                SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Login',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
                 SizedBox(height: 10),
                 Center(
                   child: TextButton(
@@ -148,24 +170,6 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'Login',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -183,6 +187,8 @@ class LoginScreen extends StatelessWidget {
   Description: page 1 of the registration page, It is still in progress for completion
 */
 class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -406,6 +412,8 @@ class SignUpScreen extends StatelessWidget {
   Description: Email Verification page, still in progress
 */
 class SignUpScreen2 extends StatelessWidget {
+  const SignUpScreen2({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -592,6 +600,8 @@ class SignUpScreen2 extends StatelessWidget {
   Description: Password Reset page for users
 */
 class ResetPassword extends StatelessWidget {
+  const ResetPassword({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
