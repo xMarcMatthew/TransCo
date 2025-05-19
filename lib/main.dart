@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:transco/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/gestures.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity, // Use Play Integrity for Android
+  );
+
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: MainScreen(),
@@ -26,8 +39,54 @@ class MainScreen extends StatelessWidget {
   Feature: [TRCO - 002] Log in Page
   Description: Log in page for users
 */
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  String? _errorMessage;
+
+  // Function to handle login with Firebase
+  Future<void> _login() async {
+    try {
+      // Sign in with email and password
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      // On successful login, navigate to the next screen (e.g., a HomeScreen)
+      // Replace this with your desired navigation
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomeScreen()), // Define HomeScreen
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found') {
+          _errorMessage = 'No user found for that email.';
+        } else if (e.code == 'wrong-password') {
+          _errorMessage = 'Incorrect password.';
+        } else {
+          _errorMessage = 'Error: ${e.message}';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +147,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Francis@gmail.com',
                     filled: true,
@@ -107,6 +167,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     filled: true,
@@ -120,11 +181,18 @@ class LoginScreen extends StatelessWidget {
                     suffixIcon: Icon(Icons.visibility_off),
                   ),
                 ),
+                if (_errorMessage != null) ...[
+                  SizedBox(height: 10),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ],
                 SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -142,11 +210,9 @@ class LoginScreen extends StatelessWidget {
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      Navigator.of(context)
-                        .push(
-                          MaterialPageRoute(
-                            builder: (context) => ResetPassword())
-                        );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => ResetPassword()),
+                      );
                     },
                     child: Text(
                       'Forgot your password?',
@@ -158,11 +224,9 @@ class LoginScreen extends StatelessWidget {
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      Navigator.of(context)
-                        .push(
-                          MaterialPageRoute(
-                            builder: (context) => SignUpScreen())
-                        );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => SignUpScreen()),
+                      );
                     },
                     child: Text(
                       'Create an account',
@@ -186,8 +250,72 @@ class LoginScreen extends StatelessWidget {
   Feature: [TRCO - 001] Registration Page
   Description: page 1 of the registration page, It is still in progress for completion
 */
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
+
+  @override
+  _SignUpScreenState createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  String? _errorMessage;
+
+  Future<void> _signUp() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _errorMessage = 'Passwords do not match.';
+      });
+      return;
+    }
+
+    try {
+      // Create user with email and password
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Optionally update user profile with first and last name
+      await userCredential.user?.updateDisplayName(
+        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+      );
+
+      // Navigate to the email verification screen
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => SignUpScreen2()),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'weak-password') {
+          _errorMessage = 'The password is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          _errorMessage = 'The email is already in use.';
+        } else {
+          _errorMessage = 'Error: ${e.message}';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +328,7 @@ class SignUpScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  height: 100, 
+                  height: 100,
                   child: Stack(
                     children: [
                       Align(
@@ -260,7 +388,6 @@ class SignUpScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 SizedBox(height: 30),
                 Text(
                   'FIRST NAME',
@@ -268,6 +395,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _firstNameController,
                   decoration: InputDecoration(
                     hintText: 'Josh',
                     filled: true,
@@ -287,7 +415,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
-                  obscureText: false,
+                  controller: _lastNameController,
                   decoration: InputDecoration(
                     hintText: 'Reyes',
                     filled: true,
@@ -307,6 +435,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Francis@gmail.com',
                     filled: true,
@@ -326,6 +455,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     filled: true,
@@ -346,6 +476,7 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _confirmPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     filled: true,
@@ -365,6 +496,14 @@ class SignUpScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
+                if (_errorMessage != null) ...[
+                  SizedBox(height: 10),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 SizedBox(height: 40),
                 Text(
                   'By creating an account, you agree to our Terms of Services and Privacy Policy',
@@ -375,15 +514,9 @@ class SignUpScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context)
-                        .push(
-                          MaterialPageRoute(
-                            builder: (context) => SignUpScreen2())
-                        );
-                    },
+                    onPressed: _signUp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal, // Replaced 'primary' with 'backgroundColor'
+                      backgroundColor: Colors.teal,
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -411,8 +544,48 @@ class SignUpScreen extends StatelessWidget {
   Feature: [TRCO - 003] Email Verification
   Description: Email Verification page, still in progress
 */
-class SignUpScreen2 extends StatelessWidget {
+class SignUpScreen2 extends StatefulWidget {
   const SignUpScreen2({super.key});
+
+  @override
+  _SignUpScreen2State createState() => _SignUpScreen2State();
+}
+
+class _SignUpScreen2State extends State<SignUpScreen2> {
+  final _verificationCodeController = TextEditingController();
+  String? _message;
+
+  Future<void> _resendVerificationEmail() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await user.sendEmailVerification();
+      setState(() {
+        _message = 'Verification email resent! Please check your inbox.';
+      });
+    }
+  }
+
+  Future<void> _verifyEmail() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await user.reload(); // Refresh user data
+      if (user.emailVerified) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      } else {
+        setState(() {
+          _message = 'Email not verified yet. Please check your inbox.';
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _verificationCodeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +598,7 @@ class SignUpScreen2 extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  height: 100, 
+                  height: 100,
                   child: Stack(
                     children: [
                       Align(
@@ -493,17 +666,17 @@ class SignUpScreen2 extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.black, 
-                                  ),
+                                  color: Colors.black,
                                 ),
+                              ),
                               TextSpan(
                                 text: 'Email ',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black, 
-                                  ),
+                                  color: Colors.black,
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -515,63 +688,82 @@ class SignUpScreen2 extends StatelessWidget {
                 Center(
                   child: RichText(
                     text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'We have sent a code to your inbox ',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black, 
+                      children: [
+                        TextSpan(
+                          text: 'We have sent a code to your inbox ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.black,
                           ),
                         ),
-                      ]
+                      ],
                     ),
                   ),
                 ),
                 SizedBox(height: 20),
-                Center(),
-                TextField( //This needs to be changed into a 6 character verification code instead of a one text box
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                Center(
+                  child: TextField(
+                    controller: _verificationCodeController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      hintText: 'Enter verification code',
                     ),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
                 SizedBox(height: 20),
                 Center(
                   child: RichText(
                     text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Did you receive the code? ',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black, 
+                      children: [
+                        TextSpan(
+                          text: 'Did you receive the code? ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.black,
                           ),
                         ),
-                      TextSpan(
-                        text: 'Resend it.',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue, 
+                        TextSpan(
+                          text: 'Resend it.',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
                           ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              _resendVerificationEmail();
+                            },
                         ),
-                      ]
+                      ],
                     ),
                   ),
                 ),
+                if (_message != null) ...[
+                  SizedBox(height: 10),
+                  Center(
+                    child: Text(
+                      _message!,
+                      style: TextStyle(
+                        color: _message!.contains('Error') ? Colors.red : Colors.green,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
                 SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _verifyEmail,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal, // Replaced 'primary' with 'backgroundColor'
+                      backgroundColor: Colors.teal,
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -599,8 +791,44 @@ class SignUpScreen2 extends StatelessWidget {
   Feature: [TRCO - 004] Reset Password
   Description: Password Reset page for users
 */
-class ResetPassword extends StatelessWidget {
+class ResetPassword extends StatefulWidget {
   const ResetPassword({super.key});
+
+  @override
+  _ResetPasswordState createState() => _ResetPasswordState();
+}
+
+class _ResetPasswordState extends State<ResetPassword> {
+  final _emailController = TextEditingController();
+  String? _message;
+
+  Future<void> _resetPassword() async {
+    try {
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: _emailController.text.trim());
+      setState(() {
+        _message = 'Password reset email sent! Check your inbox.';
+      });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found') {
+          _message = 'No user found for that email.';
+        } else {
+          _message = 'Error: ${e.message}';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _message = 'An unexpected error occurred.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -613,7 +841,7 @@ class ResetPassword extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  height: 100, 
+                  height: 100,
                   child: Stack(
                     children: [
                       Align(
@@ -681,17 +909,17 @@ class ResetPassword extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.black, 
-                                  ),
+                                  color: Colors.black,
                                 ),
+                              ),
                               TextSpan(
                                 text: 'Password ',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black, 
-                                  ),
+                                  color: Colors.black,
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -706,6 +934,7 @@ class ResetPassword extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Francis@gmail.com',
                     filled: true,
@@ -718,51 +947,21 @@ class ResetPassword extends StatelessWidget {
                         EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
-                SizedBox(height: 20),
-                Text(
-                  'PASSWORD',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                SizedBox(height: 5),
-                TextField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Color.fromARGB(255, 233, 255, 242),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                if (_message != null) ...[
+                  SizedBox(height: 10),
+                  Text(
+                    _message!,
+                    style: TextStyle(
+                      color: _message!.contains('Error') ? Colors.red : Colors.green,
+                      fontSize: 14,
                     ),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    suffixIcon: Icon(Icons.visibility_off),
                   ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'CONFIRM PASSWORD',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                SizedBox(height: 5),
-                TextField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Color.fromARGB(255, 233, 255, 242),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    suffixIcon: Icon(Icons.visibility_off),
-                  ),
-                ),
+                ],
                 SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _resetPassword,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color.fromARGB(255, 2, 183, 176),
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -781,6 +980,18 @@ class ResetPassword extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Home')),
+      body: Center(child: Text('Welcome to TransCo!')),
     );
   }
 }

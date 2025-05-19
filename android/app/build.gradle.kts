@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -7,8 +10,9 @@ plugins {
 
 android {
     namespace = "com.example.transco"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35 // Update to 34 or higher (e.g., 35 if available)
+
+    ndkVersion = "27.0.12077973" // Already set correctly
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -20,12 +24,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.transco"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 23 // Already updated to 23
+        targetSdk = 34 // Update to match compileSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

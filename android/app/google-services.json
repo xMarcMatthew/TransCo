@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "737808323980",
+    "project_id": "transco-e8838",
+    "storage_bucket": "transco-e8838.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:737808323980:android:93031c92ae79d9deb072a9",
+        "android_client_info": {
+          "package_name": "com.example.transco"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXAK7bYUn2V-ZJfAKwIk_mIlZ6In2ayho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
