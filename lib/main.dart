@@ -294,10 +294,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         password: _passwordController.text.trim(),
       );
 
-      // Optionally update user profile with first and last name
+      // Update user profile with first and last name
       await userCredential.user?.updateDisplayName(
         '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
       );
+
+      // Send email verification
+      await userCredential.user?.sendEmailVerification();
 
       // Navigate to the email verification screen
       Navigator.of(context).push(
@@ -585,15 +588,18 @@ class SignUpScreen2 extends StatefulWidget {
 }
 
 class _SignUpScreen2State extends State<SignUpScreen2> {
-  final _verificationCodeController = TextEditingController();
   String? _message;
 
   Future<void> _resendVerificationEmail() async {
     User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (user != null && !user.emailVerified) {
       await user.sendEmailVerification();
       setState(() {
         _message = 'Verification email resent! Please check your inbox.';
+      });
+    } else if (user == null) {
+      setState(() {
+        _message = 'Error: No user is signed in.';
       });
     }
   }
@@ -608,16 +614,14 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
         );
       } else {
         setState(() {
-          _message = 'Email not verified yet. Please check your inbox.';
+          _message = 'Email not verified yet. Please check your inbox and click the verification link.';
         });
       }
+    } else {
+      setState(() {
+        _message = 'Error: No user is signed in.';
+      });
     }
-  }
-
-  @override
-  void dispose() {
-    _verificationCodeController.dispose();
-    super.dispose();
   }
 
   @override
@@ -719,35 +723,10 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                 ),
                 SizedBox(height: 20),
                 Center(
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'We have sent a code to your inbox ',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Center(
-                  child: TextField(
-                    controller: _verificationCodeController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      hintText: 'Enter verification code',
-                    ),
+                  child: Text(
+                    'We have sent a verification link to your email. Please check your inbox and click the link to verify your email.',
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 SizedBox(height: 20),
@@ -756,23 +735,21 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: 'Did you receive the code? ',
+                          text: 'Didn’t receive the email? ',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: Colors.black,
                           ),
                         ),
                         TextSpan(
                           text: 'Resend it.',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: Colors.blue,
                           ),
                           recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              _resendVerificationEmail();
-                            },
+                            ..onTap = _resendVerificationEmail,
                         ),
                       ],
                     ),
@@ -787,6 +764,7 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                         color: _message!.contains('Error') ? Colors.red : Colors.green,
                         fontSize: 14,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],
@@ -803,7 +781,7 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                       ),
                     ),
                     child: Text(
-                      'Proceed',
+                      'I’ve Verified My Email',
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
@@ -1022,9 +1000,319 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Home')),
-      body: Center(child: Text('Welcome to TransCo!')),
+    return Column(
+      children: [
+        Container(
+          width: 430,
+          height: 932,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(color: Colors.white),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 430,
+                  height: 928,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage("https://placehold.co/430x928"),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                top: 690,
+                child: Text(
+                  'Google',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 364,
+                top: 665,
+                child: Container(
+                  width: 51,
+                  height: 51,
+                  decoration: ShapeDecoration(
+                    color: Colors.white.withValues(alpha: 204),
+                    shape: OvalBorder(),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 379,
+                top: 680,
+                child: Container(
+                  width: 21,
+                  height: 21,
+                  decoration: ShapeDecoration(
+                    shape: OvalBorder(
+                      side: BorderSide(
+                        width: 6,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 400,
+                top: 691,
+                child: Container(
+                  width: 5,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 374,
+                top: 691,
+                child: Container(
+                  width: 5,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 390,
+                top: 680,
+                child: Container(
+                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-1.57),
+                  width: 5,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 390,
+                top: 706,
+                child: Container(
+                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-1.57),
+                  width: 5,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 10,
+                top: 775,
+                child: Container(
+                  width: 410,
+                  height: 50,
+                  decoration: ShapeDecoration(
+                    color: Colors.black.withValues(alpha: 26),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 379,
+                top: 788,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: ShapeDecoration(
+                    shape: OvalBorder(
+                      side: BorderSide(
+                        width: 3,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 395.83,
+                top: 804,
+                child: Container(
+                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(0.79),
+                  width: 6,
+                  height: 4,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 2,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF02B7B0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 25,
+                top: 25,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: ShapeDecoration(
+                    color: Colors.black.withValues(alpha: 38),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 26,
+                top: 30,
+                child: Container(
+                  width: 58,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage("https://placehold.co/58x50"),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: 834,
+                child: Container(
+                  width: 429,
+                  height: 98,
+                  decoration: BoxDecoration(color: const Color(0xFFFAFFFD)),
+                ),
+              ),
+              Positioned(
+                left: 77,
+                top: 842,
+                child: Container(
+                  width: 23,
+                  height: 33,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage("https://placehold.co/23x33"),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 39,
+                top: 883,
+                child: SizedBox(
+                  width: 100,
+                  height: 28,
+                  child: Text(
+                    'Explore',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: const Color(0xFFCE2E3B),
+                      fontSize: 20,
+                      fontFamily: 'Creato Display',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 204,
+                top: 844,
+                child: Container(
+                  width: 21,
+                  height: 31,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage("https://placehold.co/21x31"),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 165,
+                top: 883,
+                child: SizedBox(
+                  width: 100,
+                  height: 28,
+                  child: Text(
+                    'Saved',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: const Color(0xFFFDBE3B),
+                      fontSize: 20,
+                      fontFamily: 'Creato Display',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 294,
+                top: 883,
+                child: SizedBox(
+                  width: 100,
+                  height: 28,
+                  child: Text(
+                    'Discover',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: const Color(0xFF02B7B0),
+                      fontSize: 20,
+                      fontFamily: 'Creato Display',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 326,
+                top: 842,
+                child: Container(
+                  width: 35,
+                  height: 35,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage("https://placehold.co/35x35"),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
