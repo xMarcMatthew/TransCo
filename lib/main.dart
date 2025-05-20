@@ -995,324 +995,83 @@ class _ResetPasswordState extends State<ResetPassword> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+import 'package:flutter/material.dart';
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 430,
-          height: 932,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(color: Colors.white),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Container(
-                  width: 430,
-                  height: 928,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/430x928"),
-                      fit: BoxFit.fill,
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Map Background (placeholder)
+            Positioned.fill(
+              child: Image.asset(
+                'assets/map_placeholder.png', // Replace with your map image asset
+                fit: BoxFit.cover,
+              ),
+            ),
+            // Search bar
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 80,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-              Positioned(
-                left: 20,
-                top: 690,
-                child: Text(
-                  'Google',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 364,
-                top: 665,
-                child: Container(
-                  width: 51,
-                  height: 51,
-                  decoration: ShapeDecoration(
-                    color: Colors.white.withValues(alpha: 204),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 379,
-                top: 680,
-                child: Container(
-                  width: 21,
-                  height: 21,
-                  decoration: ShapeDecoration(
-                    shape: OvalBorder(
-                      side: BorderSide(
-                        width: 6,
-                        color: const Color(0xFF02B7B0),
+                child: Row(
+                  children: const [
+                    Icon(Icons.search, color: Colors.grey),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search here...',
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              Positioned(
-                left: 400,
-                top: 691,
-                child: Container(
-                  width: 5,
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        width: 1,
-                        strokeAlign: BorderSide.strokeAlignCenter,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 374,
-                top: 691,
-                child: Container(
-                  width: 5,
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        width: 1,
-                        strokeAlign: BorderSide.strokeAlignCenter,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 390,
-                top: 680,
-                child: Container(
-                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-1.57),
-                  width: 5,
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        width: 1,
-                        strokeAlign: BorderSide.strokeAlignCenter,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 390,
-                top: 706,
-                child: Container(
-                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(-1.57),
-                  width: 5,
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        width: 1,
-                        strokeAlign: BorderSide.strokeAlignCenter,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 10,
-                top: 775,
-                child: Container(
-                  width: 410,
-                  height: 50,
-                  decoration: ShapeDecoration(
-                    color: Colors.black.withValues(alpha: 26),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 379,
-                top: 788,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: ShapeDecoration(
-                    shape: OvalBorder(
-                      side: BorderSide(
-                        width: 3,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 395.83,
-                top: 804,
-                child: Container(
-                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(0.79),
-                  width: 6,
-                  height: 4,
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        width: 2,
-                        strokeAlign: BorderSide.strokeAlignCenter,
-                        color: const Color(0xFF02B7B0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 25,
-                top: 25,
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: ShapeDecoration(
-                    color: Colors.black.withValues(alpha: 38),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 26,
-                top: 30,
-                child: Container(
-                  width: 58,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/58x50"),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                top: 834,
-                child: Container(
-                  width: 429,
-                  height: 98,
-                  decoration: BoxDecoration(color: const Color(0xFFFAFFFD)),
-                ),
-              ),
-              Positioned(
-                left: 77,
-                top: 842,
-                child: Container(
-                  width: 23,
-                  height: 33,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/23x33"),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 39,
-                top: 883,
-                child: SizedBox(
-                  width: 100,
-                  height: 28,
-                  child: Text(
-                    'Explore',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0xFFCE2E3B),
-                      fontSize: 20,
-                      fontFamily: 'Creato Display',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 204,
-                top: 844,
-                child: Container(
-                  width: 21,
-                  height: 31,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/21x31"),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 165,
-                top: 883,
-                child: SizedBox(
-                  width: 100,
-                  height: 28,
-                  child: Text(
-                    'Saved',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0xFFFDBE3B),
-                      fontSize: 20,
-                      fontFamily: 'Creato Display',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 294,
-                top: 883,
-                child: SizedBox(
-                  width: 100,
-                  height: 28,
-                  child: Text(
-                    'Discover',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0xFF02B7B0),
-                      fontSize: 20,
-                      fontFamily: 'Creato Display',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 326,
-                top: 842,
-                child: Container(
-                  width: 35,
-                  height: 35,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/35x35"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.redAccent,
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.place),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Saved',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.casino),
+            label: 'Discover',
+          ),
+        ],
+      ),
     );
   }
 }
