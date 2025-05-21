@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/gestures.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -995,11 +994,10 @@ class _ResetPasswordState extends State<ResetPassword> {
   }
 }
 
-import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
 
+class HomeScreen extends StatelessWidget {
+  const HomeScreen
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1045,6 +1043,176 @@ class HomePage extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.redAccent,
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.place),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Saved',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.casino),
+            label: 'Discover',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _showSearchSuggestions = false; // State to toggle suggestions visibility
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Map Background (placeholder)
+            Positioned.fill(
+              child: Image.asset(
+                'assets/map_placeholder.png', // Replace with your map image asset
+                fit: BoxFit.cover,
+              ),
+            ),
+            // Search bar with suggestions
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 80,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showSearchSuggestions = true;
+                            });
+                            _searchFocusNode.requestFocus();
+                          },
+                          child: const Icon(Icons.search, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            decoration: const InputDecoration(
+                              hintText: 'Search here...',
+                              border: InputBorder.none,
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _showSearchSuggestions = true;
+                              });
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _showSearchSuggestions = true;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Suggestions Dropdown
+                  if (_showSearchSuggestions)
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Recent',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          ..._suggestions.map((suggestion) {
+                            return ListTile(
+                              leading: const Icon(Icons.location_on_outlined,
+                                  color: Colors.grey),
+                              title: Text(
+                                suggestion['title']!,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              subtitle: Text(
+                                suggestion['subtitle']!,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _searchController.text = suggestion['title']!;
+                                  _showSearchSuggestions = false;
+                                  _searchFocusNode.unfocus();
+                                });
+                                // Add navigation or action for selected suggestion here
+                              },
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
