@@ -3,8 +3,10 @@ import 'package:transco/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Add Google Maps package
-import 'package:permission_handler/permission_handler.dart'; // Add permission handler
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:math';
+import 'package:geolocator/geolocator.dart';
 
 // Initialize the app with Firebase and App Check
 Future<void> main() async {
@@ -96,47 +98,30 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
   bool _isPasswordVisible = false;
 
-  // Handle login with Firebase
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validate inputs
     if (email.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter an email.';
-      });
+      setState(() => _errorMessage = 'Please enter an email.');
       return;
     }
     if (password.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter a password.';
-      });
+      setState(() => _errorMessage = 'Please enter a password.');
       return;
     }
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      // No navigation needed; MainScreen's StreamBuilder will handle the transition
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
       setState(() {
-        if (e.code == 'user-not-found') {
-          _errorMessage = 'No user found for that email.';
-        } else if (e.code == 'wrong-password') {
-          _errorMessage = 'Incorrect password.';
-        } else if (e.code == 'invalid-email') {
-          _errorMessage = 'Invalid email format.';
-        } else {
-          _errorMessage = 'Error: ${e.message}';
-        }
+        if (e.code == 'user-not-found') _errorMessage = 'No user found for that email.';
+        else if (e.code == 'wrong-password') _errorMessage = 'Incorrect password.';
+        else if (e.code == 'invalid-email') _errorMessage = 'Invalid email format.';
+        else _errorMessage = 'Error: ${e.message}';
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An unexpected error occurred.';
-      });
+      setState(() => _errorMessage = 'An unexpected error occurred.');
     }
   }
 
@@ -183,10 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                Text(
-                  'EMAIL',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('EMAIL', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _emailController,
@@ -202,10 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'PASSWORD',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('PASSWORD', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _passwordController,
@@ -219,24 +198,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                     ),
                   ),
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 10),
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
-                  ),
+                  Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 14)),
                 ],
                 const SizedBox(height: 20),
                 SizedBox(
@@ -249,31 +218,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 10),
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const ResetPassword()),
-                      );
-                    },
-                    child: const Text(
-                      'Forgot your password?',
-                      style: TextStyle(color: Colors.blue, fontSize: 14),
-                    ),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResetPassword())),
+                    child: const Text('Forgot your password?', style: TextStyle(color: Colors.blue, fontSize: 14)),
                   ),
                 ),
-                Center(
-                  child: Text('OR', style: Theme.of(context).textTheme.labelSmall),
-                ),
+                Center(child: Text('OR', style: Theme.of(context).textTheme.labelSmall)),
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                      );
-                    },
-                    child: const Text(
-                      'Create an account',
-                      style: TextStyle(color: Colors.blue, fontSize: 14),
-                    ),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignUpScreen())),
+                    child: const Text('Create an account', style: TextStyle(color: Colors.blue, fontSize: 14)),
                   ),
                 ),
               ],
@@ -309,13 +262,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Validate password requirements
   bool _isPasswordValid(String password) {
     final regex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&.])[A-Za-z\d@$!%*#?&.]{8,}$');
     return regex.hasMatch(password);
   }
 
-  // Handle sign-up with Firebase
   Future<void> _signUp() async {
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
@@ -323,23 +274,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validate inputs
     if (firstName.isEmpty || lastName.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter your first and last name.';
-      });
+      setState(() => _errorMessage = 'Please enter your first and last name.');
       return;
     }
     if (email.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter an email.';
-      });
+      setState(() => _errorMessage = 'Please enter an email.');
       return;
     }
     if (password.isEmpty || confirmPassword.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter and confirm your password.';
-      });
+      setState(() => _errorMessage = 'Please enter and confirm your password.');
       return;
     }
     if (!_isPasswordValid(password)) {
@@ -350,9 +294,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
     if (password != confirmPassword) {
-      setState(() {
-        _errorMessage = 'Passwords do not match.';
-      });
+      setState(() => _errorMessage = 'Passwords do not match.');
       return;
     }
 
@@ -361,29 +303,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: email,
         password: password,
       );
-
       await userCredential.user?.updateDisplayName('$firstName $lastName');
       await userCredential.user?.sendEmailVerification();
-
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const SignUpScreen2()),
-      );
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignUpScreen2()));
     } on FirebaseAuthException catch (e) {
       setState(() {
-        if (e.code == 'weak-password') {
-          _errorMessage = 'The password is too weak.';
-        } else if (e.code == 'email-already-in-use') {
-          _errorMessage = 'The email is already in use.';
-        } else if (e.code == 'invalid-email') {
-          _errorMessage = 'Invalid email format.';
-        } else {
-          _errorMessage = 'Error: ${e.message}';
-        }
+        if (e.code == 'weak-password') _errorMessage = 'The password is too weak.';
+        else if (e.code == 'email-already-in-use') _errorMessage = 'The email is already in use.';
+        else if (e.code == 'invalid-email') _errorMessage = 'Invalid email format.';
+        else _errorMessage = 'Error: ${e.message}';
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An unexpected error occurred.';
-      });
+      setState(() => _errorMessage = 'An unexpected error occurred.');
     }
   }
 
@@ -415,9 +346,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         alignment: Alignment.centerLeft,
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
                       Align(
@@ -450,10 +379,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                Text(
-                  'FIRST NAME',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('FIRST NAME', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _firstNameController,
@@ -469,10 +395,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'LAST NAME',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('LAST NAME', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _lastNameController,
@@ -488,10 +411,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'EMAIL',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('EMAIL', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _emailController,
@@ -507,10 +427,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'PASSWORD',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('PASSWORD', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _passwordController,
@@ -524,23 +441,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'CONFIRM PASSWORD',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('CONFIRM PASSWORD', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _confirmPasswordController,
@@ -554,15 +461,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                        });
-                      },
+                      icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                      onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
                     ),
                   ),
                 ),
@@ -574,11 +474,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 10),
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 14), textAlign: TextAlign.center),
                 ],
                 const SizedBox(height: 40),
                 Text(
@@ -620,39 +516,29 @@ class SignUpScreen2 extends StatefulWidget {
 class _SignUpScreen2State extends State<SignUpScreen2> {
   String? _message;
 
-  // Resend verification email
   Future<void> _resendVerificationEmail() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null && !user.emailVerified) {
       await user.sendEmailVerification();
-      setState(() {
-        _message = 'Verification email resent! Please check your inbox.';
-      });
+      setState(() => _message = 'Verification email resent! Please check your inbox.');
     } else if (user == null) {
-      setState(() {
-        _message = 'Error: No user is signed in.';
-      });
+      setState(() => _message = 'Error: No user is signed in.');
     }
   }
 
-  // Check email verification status
   Future<void> _verifyEmail() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       await user.reload();
       if (user.emailVerified) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const MainScreen()));
       } else {
         setState(() {
           _message = 'Email not verified yet. Please check your inbox and click the verification link.';
         });
       }
     } else {
-      setState(() {
-        _message = 'Error: No user is signed in.';
-      });
+      setState(() => _message = 'Error: No user is signed in.');
     }
   }
 
@@ -674,9 +560,7 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                         alignment: Alignment.centerLeft,
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
                       Align(
@@ -713,19 +597,11 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                             children: [
                               TextSpan(
                                 text: 'Verify your ',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.black,
-                                ),
+                                style: TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black),
                               ),
                               TextSpan(
                                 text: 'Email ',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                               ),
                             ],
                           ),
@@ -754,14 +630,7 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                         WidgetSpan(
                           child: TextButton(
                             onPressed: _resendVerificationEmail,
-                            child: const Text(
-                              'Resend it.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
+                            child: const Text('Resend it.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)),
                           ),
                         ),
                       ],
@@ -773,10 +642,7 @@ class _SignUpScreen2State extends State<SignUpScreen2> {
                   Center(
                     child: Text(
                       _message!,
-                      style: TextStyle(
-                        color: _message!.contains('Error') ? Colors.red : Colors.green,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: _message!.contains('Error') ? Colors.red : Colors.green, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -816,36 +682,25 @@ class _ResetPasswordState extends State<ResetPassword> {
   final _emailController = TextEditingController();
   String? _message;
 
-  // Send password reset email
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      setState(() {
-        _message = 'Please enter an email.';
-      });
+      setState(() => _message = 'Please enter an email.');
       return;
     }
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      setState(() {
-        _message = 'Password reset email sent! Check your inbox.';
-      });
+      setState(() => _message = 'Password reset email sent! Check your inbox.');
     } on FirebaseAuthException catch (e) {
       setState(() {
-        if (e.code == 'user-not-found') {
-          _message = 'No user found for that email.';
-        } else if (e.code == 'invalid-email') {
-          _message = 'Invalid email format.';
-        } else {
-          _message = 'Error: ${e.message}';
-        }
+        if (e.code == 'user-not-found') _message = 'No user found for that email.';
+        else if (e.code == 'invalid-email') _message = 'Invalid email format.';
+        else _message = 'Error: ${e.message}';
       });
     } catch (e) {
-      setState(() {
-        _message = 'An unexpected error occurred.';
-      });
+      setState(() => _message = 'An unexpected error occurred.');
     }
   }
 
@@ -873,9 +728,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                         alignment: Alignment.centerLeft,
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
                       Align(
@@ -912,19 +765,11 @@ class _ResetPasswordState extends State<ResetPassword> {
                             children: [
                               TextSpan(
                                 text: 'Reset ',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.black,
-                                ),
+                                style: TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black),
                               ),
                               TextSpan(
                                 text: 'Password ',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                               ),
                             ],
                           ),
@@ -934,10 +779,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                Text(
-                  'EMAIL',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                Text('EMAIL', style: Theme.of(context).textTheme.labelSmall),
                 const SizedBox(height: 5),
                 TextField(
                   controller: _emailController,
@@ -954,13 +796,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                 ),
                 if (_message != null) ...[
                   const SizedBox(height: 10),
-                  Text(
-                    _message!,
-                    style: TextStyle(
-                      color: _message!.contains('Error') ? Colors.red : Colors.green,
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text(_message!, style: TextStyle(color: _message!.contains('Error') ? Colors.red : Colors.green, fontSize: 14)),
                 ],
                 const SizedBox(height: 40),
                 SizedBox(
@@ -984,7 +820,7 @@ class _ResetPasswordState extends State<ResetPassword> {
   Company: TransCo
   Project: TransCo mobile app
   Feature: [TRCO-005] Home Screen
-  Description: Home screen with Google Maps, search functionality, and navigation overlay
+  Description: Home screen with Google Maps, local search functionality, and navigation overlay
 */
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -995,43 +831,63 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   bool _showSearchSuggestions = false;
-  bool _isFabVisible = true; // State to control FAB visibility
+  bool _isFabVisible = true;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Key to control the Scaffold state
-  late AnimationController _animationController; // Controller for drawer animation
-  late Animation<double> _drawerAnimation; // Animation for drawer slide-in
-  bool _isDrawerOpen = false; // Manual drawer state tracking
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late AnimationController _animationController;
+  late Animation<double> _drawerAnimation;
+  bool _isDrawerOpen = false;
 
   // Google Maps related variables
   GoogleMapController? _mapController;
-  static const LatLng _initialPosition = LatLng(37.7749, -122.4194); // Default to San Francisco
+  static const LatLng _initialPosition = LatLng(37.7749, -122.4194);
   bool _isMapLoading = true;
 
-  // Sample suggestions for search
-  final List<Map<String, String>> _suggestions = [
-    {'title': 'Location A', 'subtitle': 'City, Country'},
-    {'title': 'Location B', 'subtitle': 'City, Country'},
-    {'title': 'Location C', 'subtitle': 'City, Country'},
+  // Local dataset for search
+  final List<Map<String, dynamic>> _localPlaces = [
+    {
+      'title': 'San Francisco, CA, USA',
+      'subtitle': 'City in California',
+      'lat': 37.7749,
+      'lng': -122.4194,
+    },
+    {
+      'title': 'New York, NY, USA',
+      'subtitle': 'City in New York',
+      'lat': 40.7128,
+      'lng': -74.0060,
+    },
+    {
+      'title': 'Los Angeles, CA, USA',
+      'subtitle': 'City in California',
+      'lat': 34.0522,
+      'lng': -118.2437,
+    },
+    {
+      'title': 'Chicago, IL, USA',
+      'subtitle': 'City in Illinois',
+      'lat': 41.8781,
+      'lng': -87.6298,
+    },
   ];
+
+  List<Map<String, dynamic>> _placeSuggestions = [];
+  bool _isLoadingSuggestions = false;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
     );
     _drawerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    _requestLocationPermission(); // Request location permission on init
+    _requestLocationPermission();
   }
 
-  // Request location permission
   Future<void> _requestLocationPermission() async {
     var status = await Permission.locationWhenInUse.status;
     if (!status.isGranted) {
@@ -1041,7 +897,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       print('Location permission granted');
     } else {
       print('Location permission denied');
-      // Optionally show a dialog to inform the user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permission is required to use the map.')),
@@ -1050,26 +905,85 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
-  // Open the drawer and hide the FAB
+  Future<void> _fetchPlaceSuggestions(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _placeSuggestions = [];
+        _isLoadingSuggestions = false;
+      });
+      return;
+    }
+
+    setState(() => _isLoadingSuggestions = true);
+
+    final filteredPlaces = _localPlaces
+        .where((place) =>
+            place['title'].toLowerCase().contains(query.toLowerCase()) ||
+            place['subtitle'].toLowerCase().contains(query.toLowerCase()))
+        .map((place) => {
+              'title': place['title'] as String,
+              'subtitle': place['subtitle'] as String,
+              'lat': place['lat'] as double,
+              'lng': place['lng'] as double,
+            })
+        .toList();
+
+    setState(() {
+      _placeSuggestions = filteredPlaces;
+      _isLoadingSuggestions = false;
+    });
+  }
+
+  Future<void> _moveToPlace(Map<String, dynamic> place) async {
+    final coordinates = LatLng(place['lat'] as double, place['lng'] as double);
+    if (_mapController != null) {
+      await _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(CameraPosition(target: coordinates, zoom: 15)),
+      );
+      setState(() {
+        _searchController.text = place['title'] as String;
+        _showSearchSuggestions = false;
+        _searchFocusNode.unfocus();
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not move to location.')));
+    }
+  }
+
+  Future<void> _discoverRandomNearby() async {
+    if (_localPlaces.isNotEmpty && _mapController != null) {
+      final random = Random();
+      final randomPlace = _localPlaces[random.nextInt(_localPlaces.length)];
+      await _moveToPlace(randomPlace);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Discovered ${randomPlace['title']}!')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No places available to discover.')));
+    }
+  }
+
   void _openDrawer() {
     setState(() {
-      _isFabVisible = false; // Hide the FAB
-      _isDrawerOpen = true; // Mark drawer as open
+      _isFabVisible = false;
+      _isDrawerOpen = true;
     });
     _animationController.forward();
     print('Drawer opened, isDrawerOpen: $_isDrawerOpen, isFabVisible: $_isFabVisible');
   }
 
-  // Close the drawer and show the FAB
   Future<void> _closeDrawer() async {
     _animationController.reverse();
-    await Future.delayed(const Duration(milliseconds: 50)); // Sync with animation
+    await Future.delayed(const Duration(milliseconds: 300));
     setState(() {
-      _isDrawerOpen = false; // Mark drawer as closed
-      _isFabVisible = true; // Show FAB
+      _isDrawerOpen = false;
+      _isFabVisible = true;
     });
-    _scaffoldKey.currentState?.closeDrawer();
     print('Drawer close initiated, isDrawerOpen: $_isDrawerOpen, isFabVisible: $_isFabVisible');
+  }
+
+  void _closeSearch() {
+    setState(() => _showSearchSuggestions = false);
+    _searchFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -1088,274 +1002,458 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         if (_isDrawerOpen) {
           print('Back button pressed, closing drawer');
           _closeDrawer();
-          return false; // Prevent back navigation
+          return false;
         }
         return true;
       },
-      child: Scaffold(
-        key: _scaffoldKey,
-        drawer: const SizedBox(), // Placeholder to avoid default drawer behavior
-        body: Stack(
-          children: [
-            // Google Map
-            Positioned.fill(
-              child: GoogleMap(
-                initialCameraPosition: const CameraPosition(
-                  target: _initialPosition,
-                  zoom: 12,
-                ),
-                onMapCreated: (GoogleMapController controller) {
-                  _mapController = controller;
-                  setState(() {
-                    _isMapLoading = false;
-                  });
-                },
-                myLocationEnabled: true, // Show user location if permission granted
-                myLocationButtonEnabled: true, // Show "My Location" button
-                zoomControlsEnabled: false, // Disable default zoom controls
-              ),
-            ),
-            // Loading indicator while map is loading
-            if (_isMapLoading)
-              const Positioned.fill(
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            // Search bar with suggestions
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 80,
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _showSearchSuggestions = true;
-                            });
-                            _searchFocusNode.requestFocus();
-                          },
-                          child: const Icon(Icons.search, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _searchFocusNode,
-                            decoration: const InputDecoration(
-                              hintText: 'Search here...',
-                              border: InputBorder.none,
-                            ),
-                            onTap: () {
-                              setState(() {
-                                _showSearchSuggestions = true;
-                              });
-                            },
-                            onChanged: (value) {
-                              setState(() {
-                                _showSearchSuggestions = true;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+      child: GestureDetector(
+        onTap: () {
+          if (_showSearchSuggestions || _searchFocusNode.hasFocus) _closeSearch();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          key: _scaffoldKey,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {},
+                  child: GoogleMap(
+                    initialCameraPosition: const CameraPosition(target: _initialPosition, zoom: 12),
+                    onMapCreated: (GoogleMapController controller) {
+                      _mapController = controller;
+                      setState(() => _isMapLoading = false);
+                    },
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    zoomControlsEnabled: false,
                   ),
-                  // Suggestions Dropdown
-                  if (_showSearchSuggestions)
+                ),
+              ),
+              if (_isMapLoading)
+                const Positioned.fill(child: Center(child: CircularProgressIndicator())),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 80,
+                child: Column(
+                  children: [
                     Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(30),
                         boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          ),
+                          BoxShadow(color: Colors.black26, blurRadius: 5, offset: Offset(0, 3)),
                         ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Recent',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _showSearchSuggestions = true);
+                              _searchFocusNode.requestFocus();
+                            },
+                            child: const Icon(Icons.search, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocusNode,
+                              decoration: const InputDecoration(hintText: 'Search here...', border: InputBorder.none),
+                              onTap: () => setState(() => _showSearchSuggestions = true),
+                              onChanged: _fetchPlaceSuggestions,
                             ),
                           ),
-                          ..._suggestions.map((suggestion) {
-                            return ListTile(
-                              leading: const Icon(Icons.location_on_outlined, color: Colors.grey),
-                              title: Text(
-                                suggestion['title']!,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              subtitle: Text(
-                                suggestion['subtitle']!,
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  _searchController.text = suggestion['title']!;
-                                  _showSearchSuggestions = false;
-                                  _searchFocusNode.unfocus();
-                                });
-                                // Add navigation or action for selected suggestion here
-                              },
-                            );
-                          }).toList(),
                         ],
                       ),
                     ),
-                ],
-              ),
-            ),
-            // Custom drawer implementation
-            if (_isDrawerOpen)
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Stack(
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          print('Outside tap detected on custom overlay');
-                          _closeDrawer();
-                        },
-                        child: Container(
-                          color: Colors.black.withOpacity(0.1),
+                    if (_showSearchSuggestions)
+                      Container(
+                        margin: const EdgeInsets.only(top: 5),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 5, offset: Offset(0, 3)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_isLoadingSuggestions)
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else if (_placeSuggestions.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text('No results found', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                              )
+                            else
+                              ..._placeSuggestions.map((suggestion) {
+                                return ListTile(
+                                  leading: const Icon(Icons.location_on_outlined, color: Colors.grey),
+                                  title: Text(suggestion['title']!, style: const TextStyle(fontSize: 16)),
+                                  subtitle: Text(suggestion['subtitle']!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  onTap: () => _moveToPlace(suggestion),
+                                );
+                              }).toList(),
+                          ],
                         ),
                       ),
-                      Transform.translate(
-                        offset: Offset(-300 * (1 - _drawerAnimation.value), 0),
-                        child: Container(
-                          width: 300,
-                          color: Colors.white,
-                          child: Column(
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 16),
-                                color: Theme.of(context).primaryColor,
-                                child: Stack(
-                                  children: [
-                                    Center(
-                                      child: Image.asset(
-                                        'assets/ncenter_icon.png',
-                                        height: 150, // Adjust height to fit your logo
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Text(
-                                            'Logo not found',
-                                            style: TextStyle(color: Colors.white, fontSize: 16),
-                                          );
-                                        },
+                  ],
+                ),
+              ),
+              if (_isDrawerOpen)
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Stack(
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            print('Outside tap detected on custom overlay');
+                            _closeDrawer();
+                          },
+                          child: Container(color: Colors.black.withOpacity(0.1)),
+                        ),
+                        Transform.translate(
+                          offset: Offset(-300 * (1 - _drawerAnimation.value), 0),
+                          child: Container(
+                            width: 300,
+                            color: Colors.white,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 16),
+                                  color: Theme.of(context).primaryColor,
+                                  child: Stack(
+                                    children: [
+                                      Center(
+                                        child: Image.asset(
+                                          'assets/ncenter_icon.png',
+                                          height: 150,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              const Text('Logo not found', style: TextStyle(color: Colors.white, fontSize: 16)),
+                                        ),
                                       ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      top: 0,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.close, color: Colors.white),
-                                        onPressed: _closeDrawer,
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: IconButton(
+                                          icon: const Icon(Icons.close, color: Colors.white),
+                                          onPressed: _closeDrawer,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                ListTile(
+                                  leading: const Icon(Icons.person, color: Colors.grey),
+                                  title: const Text('Profile'),
+                                  onTap: () {
+                                    _closeDrawer();
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.settings, color: Colors.grey),
+                                  title: const Text('Settings'),
+                                  onTap: () {
+                                    _closeDrawer();
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.logout, color: Colors.grey),
+                                  title: const Text('Log Out'),
+                                  onTap: () async {
+                                    await FirebaseAuth.instance.signOut();
+                                    _closeDrawer();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          ),
+          floatingActionButton: _isFabVisible
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: FloatingActionButton(
+                    onPressed: _openDrawer,
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: const Icon(Icons.menu, color: Colors.white),
+                  ),
+                )
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
+          bottomNavigationBar: BottomNavigationBar(
+            backgroundColor: Colors.white,
+            selectedItemColor: Theme.of(context).colorScheme.secondary,
+            unselectedItemColor: Colors.grey,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.place), label: 'Explore'),
+              BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Saved'),
+              BottomNavigationBarItem(icon: Icon(Icons.casino), label: 'Discover'),
+            ],
+            currentIndex: 0,
+            onTap: (index) {
+              if (index == 2) _discoverRandomNearby();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/*
+  Authored by: Marc Bagasbas
+  Company: TransCo
+  Project: TransCo mobile app
+  Feature: [TRCO-006] Profile Page
+  Description: Profile page for users to view and edit their information
+*/
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 100,
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Your ',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                               ),
-                              ListTile(
-                                leading: const Icon(Icons.person, color: Colors.grey),
-                                title: const Text('Profile'),
-                                onTap: () {
-                                  _closeDrawer();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Profile feature coming soon!')),
-                                  );
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.settings, color: Colors.grey),
-                                title: const Text('Settings'),
-                                onTap: () {
-                                  _closeDrawer();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Settings feature coming soon!')),
-                                  );
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.logout, color: Colors.grey),
-                                title: const Text('Log Out'),
-                                onTap: () async {
-                                  await FirebaseAuth.instance.signOut();
-                                  _closeDrawer();
-                                },
+                              const TextSpan(
+                                text: 'Profile',
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 2, 183, 176),
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
                     ],
-                  );
-                },
-              ),
-          ],
-        ),
-        // Floating Action Button and BottomNavigationBar only shown when logged in
-        floatingActionButton: _isFabVisible
-            ? Padding(
-                padding: const EdgeInsets.only(top: 16.0), // Add top padding as per previous request
-                child: FloatingActionButton(
-                  onPressed: _openDrawer, // Open the drawer when FAB is clicked
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: const Icon(Icons.menu, color: Colors.white),
+                  ),
                 ),
-              )
-            : null,
-        floatingActionButtonLocation: FloatingActionButtonLocation.startTop, // Position FAB in top-left
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          selectedItemColor: Theme.of(context).colorScheme.secondary,
-          unselectedItemColor: Colors.grey,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.place),
-              label: 'Explore',
+                const SizedBox(height: 20),
+                Center(
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey.shade300,
+                    child: const Icon(Icons.person, size: 50, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    user?.displayName ?? 'No Name',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: Text(
+                    user?.email ?? 'No Email',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Text(
+                  'Account Details',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: const Icon(Icons.email, color: Colors.grey),
+                  title: const Text('Email'),
+                  subtitle: Text(user?.email ?? 'No Email'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person, color: Colors.grey),
+                  title: const Text('Name'),
+                  subtitle: Text(user?.displayName ?? 'No Name'),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Profile feature coming soon!')));
+                    },
+                    child: const Text('Edit Profile', style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark),
-              label: 'Saved',
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/*
+  Authored by: Marc Bagasbas
+  Company: TransCo
+  Project: TransCo mobile app
+  Feature: [TRCO-007] Settings Page
+  Description: Settings page for users to manage app preferences
+*/
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationsEnabled = true;
+  bool _darkModeEnabled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 100,
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'App ',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                              ),
+                              const TextSpan(
+                                text: 'Settings',
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 2, 183, 176),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Preferences',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                SwitchListTile(
+                  title: const Text('Enable Notifications'),
+                  value: _notificationsEnabled,
+                  onChanged: (value) {
+                    setState(() => _notificationsEnabled = value);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Notifications ${value ? 'enabled' : 'disabled'} (placeholder)')),
+                    );
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Dark Mode'),
+                  value: _darkModeEnabled,
+                  onChanged: (value) {
+                    setState(() => _darkModeEnabled = value);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Dark Mode ${value ? 'enabled' : 'disabled'} (placeholder)')),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Account',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: const Icon(Icons.lock, color: Colors.grey),
+                  title: const Text('Change Password'),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResetPassword())),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Delete Account'),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete Account feature coming soon!')));
+                  },
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.casino),
-              label: 'Discover',
-            ),
-          ],
+          ),
         ),
       ),
     );
